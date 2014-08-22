@@ -1,0 +1,14 @@
+[project]
+
+name = "rustv"
+version = "0.0.1-pre"
+authors = ["Jared Roesch <roeschinc@gmail.com>"]
+
+[lib]
+name = "rustv"
+path = "src/rustv/lib.rs"
+
+[[bin]]
+name = "rustv"
+test = false
+doc = false
