@@ -67,4 +67,6 @@ impl Rustv {
     fs::symlink(version_lib, lib);
     fs::symlink(version_share, share);
   }
+
+  fn detect_system_rust() {}
 }
