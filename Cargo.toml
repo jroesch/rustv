@@ -1,5 +1,4 @@
-[project]
-
+[project] 
 name = "rustv"
 version = "0.0.1-pre"
 authors = ["Jared Roesch <roeschinc@gmail.com>"]
@@ -8,7 +7,18 @@ authors = ["Jared Roesch <roeschinc@gmail.com>"]
 name = "rustv"
 path = "src/rustv/lib.rs"
 
+[dependencies.docopt]
+git = "https://github.com/burntsushi/docopt.rs"
+
+[dependencies.docopt_macros]
+git = "https://github.com/burntsushi/docopt.rs"
+
 [[bin]]
 name = "rustv"
+test = false
+doc = false
+
+[[bin]]
+name = "rustv-build"
 test = false
 doc = false

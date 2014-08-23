@@ -1,7 +1,9 @@
 extern crate rustv;
 
+use rustv::{Rustv};
+
 fn main() {
   let root = rustv::locate_installation_directory();
-  let registry = rustv::build_version_registry(&root);
-  println!("Root path: {}", root.display());
+  let installation = Rustv::new(&root);
+  println!("Root path: {}", installation.root.display());
 }
