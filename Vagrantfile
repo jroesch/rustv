@@ -13,8 +13,4 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     v.vmx["memsize"] = "1024"
     v.vmx["numvcpus"] = "2"
   end
-
-  ["Gemfile", "kannel.conf", "kannel_test.rb", "setup.sh", "modems.conf", "start_example.sh"].each do |file_name|
-    config.vm.provision "file", source: "./#{file_name}", destination: "~/#{file_name}"
-  end
 end
