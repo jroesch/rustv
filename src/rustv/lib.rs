@@ -7,9 +7,8 @@ extern crate toml;
 extern crate serialize;
 
 use std::io;
-use std::io::{File, fs};
+use std::io::{File, fs, IoResult};
 use std::os::{getenv};
-use std::collections::hashmap::{HashMap};
 use std::io::process;
 
 static RUSTV_ENV_NAME: &'static str = "RUSTV_PATH";
@@ -72,7 +71,7 @@ impl Rustv {
     };
 
     if !directory_exists {
-      Rustv::create_rustv_directory(prefix)
+      Rustv::create_rustv_directory(prefix).unwrap()
     }
 
     let current_version = Rustv::read_current_version(&prefix.join(RUSTV_DIR_NAME));
@@ -100,53 +99,48 @@ impl Rustv {
   }
 
   fn create_rustv_directory(prefix: &Path) -> IoResult<()>{
+    println!("Setting up installation directory");
     let root = &prefix.join(".rustv");
     try!(fs::mkdir(root, io::UserRWX))
     try!(fs::mkdir(&root.join("bin"), io::UserRWX))
     try!(fs::mkdir(&root.join("versions"), io::UserRWX));
-    println!("Setting up installation directory");
-  }
-
-  pub fn build_version_registry(root: &Path) -> HashMap<Path, Path> {
-    let mut hash_map = HashMap::new();
-    for subdir in fs::walk_dir(root).unwrap() {
-      println!("Found subdirectory: {}", subdir.display())
-    }
-    hash_map
+    Ok(())
   }
 
   /// Place symbolic link to the requested version in the installation
   /// directory.
-  pub fn activate_version(&self, version: &Path) {
+  pub fn activate_version(&self, version: &Path) -> IoResult<()> {
     // Both `lib` and `share` are easy just symlink to them.
 
     // Clean up
     let lib = &self.root.join("lib");
     let share = &self.root.join("share");
 
-    fs::unlink(lib);
-    fs::unlink(share);
+    try!(fs::unlink(lib));
+    try!(fs::unlink(share))
 
     // Re-symlink
     let version_lib = &version.join("lib");
     let version_share = &version.join("share");
 
-    fs::symlink(version_lib, lib);
-    fs::symlink(version_share, share);
+    try!(fs::symlink(version_lib, lib))
+    try!(fs::symlink(version_share, share));
 
     // Handle Binary here
     let bin_dir = &version.join("bin");
     for exec in fs::walk_dir(bin_dir).unwrap() {
       println!("Generating shim for: {}", exec.display());
-      self.create_binary_shim(&exec);
+      try!(self.create_binary_shim(&exec));
     }
+
+    Ok(())
   }
 
   fn detect_system_rust() {
     fail!("Not yet implemented: detect_system_rust")
   }
 
-  pub fn create_binary_shim(&self, exec_path: &Path) {
+  pub fn create_binary_shim(&self, exec_path: &Path) -> IoResult<()> {
     let lib_path = self.current_version.join("lib");
     let env_setup = format!("DYLD_LIBRARY_PATH={}", lib_path.display());
     let contents = format!("#!/bin/sh\n{} {} $@", env_setup, exec_path.display());
@@ -156,10 +150,11 @@ impl Rustv {
       Some(file_name) => {
         let file_path = &self.root.join("bin").join(file_name);
         println!("Putting shim here: {}", file_path.display()); //.write(contents.as_bytes()));
-        File::create(file_path).write(contents.as_bytes());
-        fs::chmod(file_path, io::UserExec);
+        try!(File::create(file_path).write(contents.as_bytes()));
+        try!(fs::chmod(file_path, io::UserExec))
       }
     }
+    Ok(())
   }
 
   pub fn change_version(&mut self, version: &str) {
@@ -173,7 +168,7 @@ impl Rustv {
     shell::Shell::new(command).block().unwrap()
   }
 
-  pub fn which(&self, version: &str) {
-    println!("which!")
+  pub fn which(&self, command: &str) {
+    println!("{}", self.current_version.join("bin").join(command).display())
   }
 }
