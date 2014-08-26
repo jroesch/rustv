@@ -12,7 +12,7 @@ impl Shell {
   }
 
   pub fn block(self) -> IoResult<()> {
-    let mut child = match self.command.spawn() {
+    let child = match self.command.spawn() {
       Ok(child) => child,
       Err(e) => fail!("failed to execute make: {}", e)
     };

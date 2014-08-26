@@ -10,7 +10,6 @@ use std::io;
 use std::io::{File, fs};
 use std::os::{getenv};
 use std::collections::hashmap::{HashMap};
-use toml::{Value};
 use std::io::process;
 
 static RUSTV_ENV_NAME: &'static str = "RUSTV_PATH";
@@ -100,11 +99,11 @@ impl Rustv {
     File::open(&root.join("current_version")).read_to_string().unwrap().chomp()
   }
 
-  fn create_rustv_directory(prefix: &Path) {
+  fn create_rustv_directory(prefix: &Path) -> IoResult<()>{
     let root = &prefix.join(".rustv");
-    fs::mkdir(root, io::UserRWX);
-    fs::mkdir(&root.join("bin"), io::UserRWX);
-    fs::mkdir(&root.join("versions"), io::UserRWX);
+    try!(fs::mkdir(root, io::UserRWX))
+    try!(fs::mkdir(&root.join("bin"), io::UserRWX))
+    try!(fs::mkdir(&root.join("versions"), io::UserRWX));
     println!("Setting up installation directory");
   }
 
@@ -143,10 +142,6 @@ impl Rustv {
     }
   }
 
-  fn insert_bin_shim() {
-    println!("shim!");
-  }
-
   fn detect_system_rust() {
     fail!("Not yet implemented: detect_system_rust")
   }
@@ -167,19 +162,14 @@ impl Rustv {
     }
   }
 
+  pub fn change_version(&mut self, version: &str) {
+    self.current_version = self.install_path_for(version);
+  }
+
   pub fn install(&self, version: &str, prefix: &str) {
     let mut command = process::Command::new("rustv-build");
+    println!("executin: rustv-build {} {}", version, prefix);
     command.arg(version).arg(prefix);
-    // let mut child = match command.spawn() {
-    //   Err(e) => fail!("failed to execute rustv-build: {}", e),
-    //   Ok(child) => {
-    //     println!("Here I am executing the child");
-    //     let res = child.stdout.clone().unwrap().read_to_end().unwrap();
-    //     let res2 = child.stderr.clone().unwrap().read_to_end().unwrap();
-    //     println!("Stdout: {}", String::from_utf8(res));
-    //     println!("Stderr: {}", String::from_utf8(res2));
-    //   }
-    // };
     shell::Shell::new(command).block().unwrap()
   }
 
