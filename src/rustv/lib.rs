@@ -1,15 +1,24 @@
 #![crate_name="rustv"]
 #![crate_type="rlib"]
+#![feature(phase)]
+
+#[phase(plugin, link)] extern crate log;
+extern crate toml;
+extern crate serialize;
 
 use std::io;
 use std::io::{File, fs};
 use std::os::{getenv};
 use std::collections::hashmap::{HashMap};
+use toml::{Value};
+use std::io::process;
 
 static RUSTV_ENV_NAME: &'static str = "RUSTV_PATH";
 static RUSTV_DIR_NAME: &'static str = ".rustv";
 static HOME_NOT_FOUND: &'static str =
   "Could not locate active rustv installation or HOME environment variable.";
+
+pub mod shell;
 
 pub fn locate_installation_directory() -> Path {
   match getenv(RUSTV_ENV_NAME) {
@@ -19,6 +28,11 @@ pub fn locate_installation_directory() -> Path {
     },
     Some(path) => Path::new(path)
   }
+}
+
+#[deriving(Show, Encodable, Decodable)]
+pub struct Version {
+  name: String
 }
 
 pub struct Rustv {
@@ -42,7 +56,16 @@ impl StringUtil for String {
   }
 }
 
+// parse toml listing allow for multiple entries
+// only load strcture when installation is going to happen
+// have a heuristic for selecting each version
+// check versisions and build
+// allow for update to fetch a new listing
 impl Rustv {
+  pub fn install_path_for(&self, version: &str) -> Path {
+    self.root.join("versions").join(version)
+  }
+
   pub fn new(prefix: &Path) -> Rustv {
     let directory_exists = match fs::stat(prefix) {
       Err(_) => false,
@@ -55,10 +78,22 @@ impl Rustv {
 
     let current_version = Rustv::read_current_version(&prefix.join(RUSTV_DIR_NAME));
 
+  //  let versions =
     Rustv {
       root: prefix.join(RUSTV_DIR_NAME),
       current_version: prefix.join(RUSTV_DIR_NAME).join("versions").join(current_version.as_slice())
     }
+  }
+
+  pub fn setup() -> Rustv {
+    Rustv::new(&locate_installation_directory())
+  }
+
+  pub fn load_versions(&self) -> Vec<Version> {
+    let toml = File::open(&self.root.join("versions.toml")).read_to_string().unwrap();
+    let table = toml::Parser::new(toml.as_slice()).parse().unwrap();
+    let versions = table.find(&"version".to_string()).unwrap();
+    toml::decode(versions.clone()).unwrap()
   }
 
   fn read_current_version(root: &Path) -> String {
@@ -130,5 +165,25 @@ impl Rustv {
         fs::chmod(file_path, io::UserExec);
       }
     }
+  }
+
+  pub fn install(&self, version: &str, prefix: &str) {
+    let mut command = process::Command::new("rustv-build");
+    command.arg(version).arg(prefix);
+    // let mut child = match command.spawn() {
+    //   Err(e) => fail!("failed to execute rustv-build: {}", e),
+    //   Ok(child) => {
+    //     println!("Here I am executing the child");
+    //     let res = child.stdout.clone().unwrap().read_to_end().unwrap();
+    //     let res2 = child.stderr.clone().unwrap().read_to_end().unwrap();
+    //     println!("Stdout: {}", String::from_utf8(res));
+    //     println!("Stderr: {}", String::from_utf8(res2));
+    //   }
+    // };
+    shell::Shell::new(command).block().unwrap()
+  }
+
+  pub fn which(&self, version: &str) {
+    println!("which!")
   }
 }

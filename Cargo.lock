@@ -4,6 +4,7 @@ version = "0.0.1-pre"
 dependencies = [
  "docopt 0.6.0 (git+https://github.com/burntsushi/docopt.rs#fc7ba2f1a5a351f7874257d880223d2ff5c75d36)",
  "docopt_macros 0.6.0 (git+https://github.com/burntsushi/docopt.rs#fc7ba2f1a5a351f7874257d880223d2ff5c75d36)",
+ "toml 0.1.0 (git+https://github.com/alexcrichton/toml-rs#8c128cb550ba66d4962cd81acca93857c605eaa0)",
 ]
 
 [[package]]
@@ -18,4 +19,9 @@ source = "git+https://github.com/burntsushi/docopt.rs#fc7ba2f1a5a351f7874257d880
 dependencies = [
  "docopt 0.6.0 (git+https://github.com/burntsushi/docopt.rs#fc7ba2f1a5a351f7874257d880223d2ff5c75d36)",
 ]
+
+[[package]]
+name = "toml"
+version = "0.1.0"
+source = "git+https://github.com/alexcrichton/toml-rs#8c128cb550ba66d4962cd81acca93857c605eaa0"
 
