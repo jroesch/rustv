@@ -19,8 +19,14 @@ impl Shell {
 
     /* Why do I need to clone here? */
     let mut child_stdout = BufferedReader::new(child.stdout.clone().unwrap());
+    let mut child_stderr = BufferedReader::new(child.stderr.clone().unwrap());
 
     for io_line in child_stdout.lines() {
+      let line = try!(io_line);
+      print!("{}", line);
+    }
+
+    for io_line in child_stderr.lines() {
       let line = try!(io_line);
       print!("{}", line);
     }

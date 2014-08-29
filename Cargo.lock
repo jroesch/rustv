@@ -4,6 +4,7 @@ version = "0.0.1-pre"
 dependencies = [
  "docopt 0.6.0 (git+https://github.com/burntsushi/docopt.rs#fc7ba2f1a5a351f7874257d880223d2ff5c75d36)",
  "docopt_macros 0.6.0 (git+https://github.com/burntsushi/docopt.rs#fc7ba2f1a5a351f7874257d880223d2ff5c75d36)",
+ "http 0.1.0-pre (git+https://github.com/chris-morgan/rust-http#b7f2fe742c01cb19a7d2873d9b96e005fcdc648c)",
  "toml 0.1.0 (git+https://github.com/alexcrichton/toml-rs#8c128cb550ba66d4962cd81acca93857c605eaa0)",
 ]
 
@@ -21,7 +22,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "encoding"
+version = "0.1.0"
+source = "git+https://github.com/lifthrasiir/rust-encoding#7e7950ddbd46428a439db3e2594fa78f0972ef2e"
+
+[[package]]
+name = "http"
+version = "0.1.0-pre"
+source = "git+https://github.com/chris-morgan/rust-http#b7f2fe742c01cb19a7d2873d9b96e005fcdc648c"
+dependencies = [
+ "openssl 0.0.0 (git+https://github.com/sfackler/rust-openssl.git#07f12370d3644673e8811f93485cddccead22590)",
+ "url 0.1.0 (git+https://github.com/servo/rust-url#cb5b5f19ffae4aa040f9b4a57bd3f707aa6ffb54)",
+]
+
+[[package]]
+name = "openssl"
+version = "0.0.0"
+source = "git+https://github.com/sfackler/rust-openssl.git#07f12370d3644673e8811f93485cddccead22590"
+
+[[package]]
 name = "toml"
 version = "0.1.0"
 source = "git+https://github.com/alexcrichton/toml-rs#8c128cb550ba66d4962cd81acca93857c605eaa0"
+
+[[package]]
+name = "url"
+version = "0.1.0"
+source = "git+https://github.com/servo/rust-url#cb5b5f19ffae4aa040f9b4a57bd3f707aa6ffb54"
+dependencies = [
+ "encoding 0.1.0 (git+https://github.com/lifthrasiir/rust-encoding#7e7950ddbd46428a439db3e2594fa78f0972ef2e)",
+]
 

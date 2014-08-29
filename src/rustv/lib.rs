@@ -5,18 +5,24 @@
 #[phase(plugin, link)] extern crate log;
 extern crate toml;
 extern crate serialize;
+extern crate http;
+extern crate url;
 
 use std::io;
 use std::io::{File, fs, IoResult};
 use std::os::{getenv};
 use std::io::process;
+use std::collections::HashMap;
+use version::Version;
 
 static RUSTV_ENV_NAME: &'static str = "RUSTV_PATH";
-static RUSTV_DIR_NAME: &'static str = ".rustv";
+pub static RUSTV_DIR_NAME: &'static str = ".rustv";
 static HOME_NOT_FOUND: &'static str =
   "Could not locate active rustv installation or HOME environment variable.";
+pub static DOWNLOAD_CACHE_DIR: &'static str = "dl_cache";
 
 pub mod shell;
+pub mod version;
 
 pub fn locate_installation_directory() -> Path {
   match getenv(RUSTV_ENV_NAME) {
@@ -28,14 +34,10 @@ pub fn locate_installation_directory() -> Path {
   }
 }
 
-#[deriving(Show, Encodable, Decodable)]
-pub struct Version {
-  name: String
-}
-
 pub struct Rustv {
   pub root: Path,
-  pub current_version: Path
+  pub current_version: Path,
+  versions: HashMap<String, Version>
 }
 
 trait StringUtil {
@@ -52,6 +54,18 @@ impl StringUtil for String {
     }
     result
   }
+}
+
+fn load_versions(root: &Path) -> HashMap<String, Version> {
+  let toml = File::open(&root.join("versions.toml")).read_to_string().unwrap();
+  let table = toml::Parser::new(toml.as_slice()).parse().unwrap();
+  let versions = table.find(&"version".to_string()).unwrap();
+  let versions: Vec<Version> = toml::decode(versions.clone()).unwrap();
+  let mut hash_map = HashMap::new();
+  for version in versions.move_iter() {
+    hash_map.insert(version.name.clone(), version);
+  };
+  hash_map
 }
 
 // parse toml listing allow for multiple entries
@@ -74,24 +88,21 @@ impl Rustv {
       Rustv::create_rustv_directory(prefix).unwrap()
     }
 
-    let current_version = Rustv::read_current_version(&prefix.join(RUSTV_DIR_NAME));
+    let version = Rustv::read_current_version(&prefix.join(RUSTV_DIR_NAME));
 
-  //  let versions =
+    let root = prefix.join(RUSTV_DIR_NAME);
+    let current_version = root.join("versions").join(version.as_slice());
+    let versions = load_versions(&root);
+
     Rustv {
-      root: prefix.join(RUSTV_DIR_NAME),
-      current_version: prefix.join(RUSTV_DIR_NAME).join("versions").join(current_version.as_slice())
+      root: root,
+      current_version: current_version,
+      versions: versions
     }
   }
 
   pub fn setup() -> Rustv {
     Rustv::new(&locate_installation_directory())
-  }
-
-  pub fn load_versions(&self) -> Vec<Version> {
-    let toml = File::open(&self.root.join("versions.toml")).read_to_string().unwrap();
-    let table = toml::Parser::new(toml.as_slice()).parse().unwrap();
-    let versions = table.find(&"version".to_string()).unwrap();
-    toml::decode(versions.clone()).unwrap()
   }
 
   fn read_current_version(root: &Path) -> String {
@@ -104,6 +115,7 @@ impl Rustv {
     try!(fs::mkdir(root, io::UserRWX))
     try!(fs::mkdir(&root.join("bin"), io::UserRWX))
     try!(fs::mkdir(&root.join("versions"), io::UserRWX));
+    try!(fs::mkdir(&root.join("dl_cache"), io::UserRWX));
     Ok(())
   }
 
@@ -163,9 +175,17 @@ impl Rustv {
 
   pub fn install(&self, version: &str, prefix: &str) {
     let mut command = process::Command::new("rustv-build");
-    println!("executin: rustv-build {} {}", version, prefix);
+    println!("executing: rustv-build {} {}", version, prefix);
     command.arg(version).arg(prefix);
     shell::Shell::new(command).block().unwrap()
+  }
+
+  pub fn version<'a>(&'a self, version_name: &String) -> &'a Version {
+    self.versions.find(version_name).unwrap()
+  }
+
+  fn cache_path(&self) -> Path {
+    self.root.join("cache")
   }
 
   pub fn which(&self, command: &str) {

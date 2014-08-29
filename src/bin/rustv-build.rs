@@ -9,10 +9,13 @@ extern crate docopt;
 
 use std::io::{IoResult};
 use std::os;
+use std::io;
+use std::io::fs;
 use std::io::process;
 use docopt::FlagParser;
 use term::{Terminal, stdout, color};
 use rustv::shell::{Shell};
+use rustv::{Rustv, DOWNLOAD_CACHE_DIR};
 
 docopt!(Args, "
 rustv-build
@@ -36,7 +39,12 @@ fn main() {
   let prefix = arguments.arg_PREFIX;
   print_install_message(&prefix, &version_name).unwrap();
   let prefix_path = &Path::new(prefix);
-  build_rust_in(&Path::new("/Users/jroesch/Git/rust"), prefix_path, version_name.clone());
+  let rustv = Rustv::setup();
+  let version_to_install = rustv.version(&version_name);
+  println!("About to download!");
+  let dl_path = rustv.root.join(DOWNLOAD_CACHE_DIR);
+  let source = version_to_install.download_to(&dl_path).unwrap();
+  build_rust_in(&source, prefix_path, version_name.clone());
   //build_cargo_in(&Path::new("/Users/jroesch/Git/cargo"), prefix_path, version_name);
 }
 
@@ -54,7 +62,7 @@ fn build_rust_in(build_path: &Path, prefix: &Path, version_name: String) {
   os::change_dir(build_path);
   let mut configure = process::Command::new(build_path.join("configure"));
   configure.arg(Path::new(format!("--prefix={}", prefix.join(version_name).display())));
-  //Shell::new(configure).block().unwrap();
+  Shell::new(configure).block().unwrap();
 
   let make = process::Command::new("make");
   Shell::new(make).block().unwrap();
