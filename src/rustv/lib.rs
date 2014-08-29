@@ -68,6 +68,16 @@ fn load_versions(root: &Path) -> HashMap<String, Version> {
   hash_map
 }
 
+fn create_rustv_directory(prefix: &Path) -> IoResult<()>{
+  println!("Setting up installation directory");
+  let root = &prefix.join(".rustv");
+  try!(fs::mkdir(root, io::UserRWX))
+  try!(fs::mkdir(&root.join("bin"), io::UserRWX))
+  try!(fs::mkdir(&root.join("versions"), io::UserRWX));
+  fs::mkdir(&root.join("dl_cache"), io::UserRWX).unwrap();
+  Ok(())
+}
+
 // parse toml listing allow for multiple entries
 // only load strcture when installation is going to happen
 // have a heuristic for selecting each version
@@ -79,13 +89,10 @@ impl Rustv {
   }
 
   pub fn new(prefix: &Path) -> Rustv {
-    let directory_exists = match fs::stat(prefix) {
-      Err(_) => false,
-      Ok(_) => true
-    };
+    let directory_exists = prefix.join(".rustv").exists();
 
     if !directory_exists {
-      Rustv::create_rustv_directory(prefix).unwrap()
+      create_rustv_directory(prefix).unwrap()
     }
 
     let version = Rustv::read_current_version(&prefix.join(RUSTV_DIR_NAME));
@@ -107,16 +114,6 @@ impl Rustv {
 
   fn read_current_version(root: &Path) -> String {
     File::open(&root.join("current_version")).read_to_string().unwrap().chomp()
-  }
-
-  fn create_rustv_directory(prefix: &Path) -> IoResult<()>{
-    println!("Setting up installation directory");
-    let root = &prefix.join(".rustv");
-    try!(fs::mkdir(root, io::UserRWX))
-    try!(fs::mkdir(&root.join("bin"), io::UserRWX))
-    try!(fs::mkdir(&root.join("versions"), io::UserRWX));
-    try!(fs::mkdir(&root.join("dl_cache"), io::UserRWX));
-    Ok(())
   }
 
   /// Place symbolic link to the requested version in the installation
