@@ -118,38 +118,29 @@ impl Rustv {
 
   /// Place symbolic link to the requested version in the installation
   /// directory.
-  pub fn activate_version(&self, version: &Path) -> IoResult<()> {
-    // Both `lib` and `share` are easy just symlink to them.
 
-    // Clean up
-    let lib = &self.root.join("lib");
-    let share = &self.root.join("share");
+  fn detect_system_rust() {
+    fail!("Not yet implemented: detect_system_rust")
+  }
 
-    try!(fs::unlink(lib));
-    try!(fs::unlink(share))
+  pub fn versions(&self) -> IoResult<()> {
+    for version in try!(fs::readdir(&self.root.join("versions"))).iter() {
+      println!("{}", version.display());
+    }
+    Ok(())
+  }
 
-    // Re-symlink
-    let version_lib = &version.join("lib");
-    let version_share = &version.join("share");
-
-    try!(fs::symlink(version_lib, lib))
-    try!(fs::symlink(version_share, share));
-
-    // Handle Binary here
-    let bin_dir = &version.join("bin");
+  pub fn refresh(&self) -> IoResult<()> {
+    let bin_dir = &self.current_version.join("bin");
     for exec in fs::walk_dir(bin_dir).unwrap() {
-      println!("Generating shim for: {}", exec.display());
+      println!("Generating binary shim for: {}", exec.display());
       try!(self.create_binary_shim(&exec));
     }
 
     Ok(())
   }
 
-  fn detect_system_rust() {
-    fail!("Not yet implemented: detect_system_rust")
-  }
-
-  pub fn create_binary_shim(&self, exec_path: &Path) -> IoResult<()> {
+  fn create_binary_shim(&self, exec_path: &Path) -> IoResult<()> {
     let lib_path = self.current_version.join("lib");
     let env_setup = format!("DYLD_LIBRARY_PATH={}", lib_path.display());
     let contents = format!("#!/bin/sh\n{} {} $@", env_setup, exec_path.display());
@@ -166,8 +157,32 @@ impl Rustv {
     Ok(())
   }
 
-  pub fn change_version(&mut self, version: &str) {
+  fn write_version_file(&self, version: &str) -> IoResult<()> {
+    File::open_mode(&self.root.join("current_version"), io::Truncate, io::Write).write(version.as_bytes())
+  }
+
+  pub fn change_version(&mut self, version: &str) -> IoResult<()> {
     self.current_version = self.install_path_for(version);
+    self.write_version_file(version);
+    // Both `lib` and `share` are easy just symlink to them.
+
+    // Clean up
+    let lib = &self.root.join("lib");
+    let share = &self.root.join("share");
+
+    try!(fs::unlink(lib));
+    try!(fs::unlink(share))
+
+    // Re-symlink
+    let version_lib = &self.current_version.join("lib");
+    let version_share = &self.current_version.join("share");
+
+    try!(fs::symlink(version_lib, lib))
+    try!(fs::symlink(version_share, share));
+
+    self.refresh();
+
+    Ok(())
   }
 
   pub fn install(&self, version: &str, prefix: &str) {

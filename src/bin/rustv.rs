@@ -14,6 +14,8 @@ Rust's version manager
 Usage: rustv install <version>
        rustv which   <command>
        rustv global  <version>
+       rustv refresh
+       rustv versions
        rustv (-h | --help | --version)
 
 Options:
@@ -22,13 +24,21 @@ Options:
 ")
 
 #[deriving(Decodable, Show)]
-enum Command { Install, Which, Global }
+enum Command { Install, Which, Global, Refresh, Versions }
 
 fn get_command(args: &Args) -> Command {
   if args.cmd_install {
     Install
-  } else {
+  } else if args.cmd_which {
     Which
+  } else if args.cmd_global {
+    Global
+  } else if args.cmd_refresh {
+    Refresh
+  } else if args.cmd_versions {
+    Versions
+  } else {
+    fail!("unsupported command")
   }
 }
 
@@ -53,6 +63,12 @@ fn main() {
     Global => {
       let version = &arguments.arg_version;
       rustv.change_version(version.as_slice());
+    },
+    Refresh => {
+      rustv.refresh().unwrap();
+    },
+    Versions => {
+      rustv.versions().unwrap();
     }
   };
   //installation.activate_version(&installation.current_version);
