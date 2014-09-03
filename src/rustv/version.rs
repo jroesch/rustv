@@ -98,7 +98,7 @@ impl Version {
     } else {
       println!("Invoking binary build process...");
       let mut install = Command::new(build_path.join("install.sh"));
-      install.arg(Path::new(format!("--prefix={}", prefix.join(version_name.as_slice()).display())));
+      install.arg(Path::new(format!("--prefix={}", prefix.display())));
       try!(Shell::new(install).block());
       println!("Finshed binary installation.")
     }

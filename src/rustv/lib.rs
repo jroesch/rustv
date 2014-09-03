@@ -28,7 +28,7 @@ pub fn locate_installation_directory() -> Path {
   match getenv(RUSTV_ENV_NAME) {
     None => match getenv("HOME") {
       None => fail!(HOME_NOT_FOUND),
-      Some(path) => Path::new(path)
+      Some(path) => Path::new(path).join(".rustv")
     },
     Some(path) => Path::new(path)
   }
@@ -68,9 +68,8 @@ fn load_versions(root: &Path) -> HashMap<String, Version> {
   hash_map
 }
 
-fn create_rustv_directory(prefix: &Path) -> IoResult<()>{
-  println!("Setting up installation directory");
-  let root = &prefix.join(".rustv");
+fn create_rustv_directory(root: &Path) -> IoResult<()>{
+  println!("Setting up .rustv");
   try!(fs::mkdir(root, io::UserRWX))
   try!(fs::mkdir(&root.join("bin"), io::UserRWX))
   try!(fs::mkdir(&root.join("versions"), io::UserRWX));
@@ -88,26 +87,24 @@ impl Rustv {
     self.root.join("versions").join(version)
   }
 
-  pub fn new(prefix: &Path) -> Rustv {
-    let directory_exists = prefix.join(".rustv").exists();
+  pub fn new(root: &Path) -> Rustv {
+    let directory_exists = root.exists();
 
-    println!("Above here! with path as {}", prefix.join(".rustv").display());
+    println!("Above here! with path as {}", root.display());
 
     if !directory_exists {
       println!("Doing Rustv init")
-      create_rustv_directory(prefix).unwrap()
+      create_rustv_directory(root).unwrap()
     }
 
-    let version = Rustv::read_current_version(&prefix.join(RUSTV_DIR_NAME));
-
-    let root = prefix.join(RUSTV_DIR_NAME);
+    let version = Rustv::read_current_version(root);
     let current_version = root.join("versions").join(version.as_slice());
     println!("Loading versions ...");
-    let versions = load_versions(&root);
+    let versions = load_versions(root);
     println!("Loaded versions.")
 
     Rustv {
-      root: root,
+      root: root.clone(),
       current_version: current_version,
       versions: versions
     }
@@ -140,25 +137,30 @@ impl Rustv {
 
   pub fn versions(&self) -> IoResult<()> {
     for version in try!(fs::readdir(&self.root.join("versions"))).iter() {
-      println!("{}", version.display());
+      print!("{}", version.display());
+      if version == &self.current_version { print!("*"); }
+      println!("");
     }
     Ok(())
   }
 
   pub fn refresh(&self) -> IoResult<()> {
     let bin_dir = &self.current_version.join("bin");
-    for exec in fs::walk_dir(bin_dir).unwrap() {
+    for exec in try!(fs::readdir(bin_dir)).iter() {
       println!("Generating binary shim for: {}", exec.display());
-      try!(self.create_binary_shim(&exec));
+      try!(self.create_binary_shim(exec));
     }
 
     Ok(())
   }
 
   fn create_binary_shim(&self, exec_path: &Path) -> IoResult<()> {
-    let lib_path = self.current_version.join("lib");
-    let env_setup = format!("DYLD_LIBRARY_PATH={}", lib_path.display());
-    let contents = format!("#!/bin/sh\n{} {} $@", env_setup, exec_path.display());
+    let rustv_path = format!("export RUSTV_PATH={}", self.root.display());
+    let env_setup = "export DYLD_LIBRARY_PATH=$RUSTV_PATH/versions/`cat $RUSTV_PATH/current_version`/lib".to_string();
+    let bin = format!("$RUSTV_PATH/versions/`cat $RUSTV_PATH/current_version`/bin/{} $@", exec_path.filename_str().unwrap());
+    let contents = format!("#!/bin/sh\n{}\n{}\n{}", rustv_path, env_setup, bin);
+
+    println!("{}", contents);
 
     match exec_path.filename_str() {
       None => fail!("I don't know why this would ever fail - Jared"),
@@ -173,7 +175,8 @@ impl Rustv {
   }
 
   fn write_version_file(&self, version: &str) -> IoResult<()> {
-    File::open_mode(&self.root.join("current_version"), io::Truncate, io::Write).write(version.as_bytes())
+    File::open_mode(&self.root.join("current_version"), io::Truncate, io::Write).write(version.as_bytes());
+    fs::chmod(&self.root.join("current_version"), io::UserRWX)
   }
 
   pub fn change_version(&mut self, version: &str) -> IoResult<()> {
@@ -195,7 +198,7 @@ impl Rustv {
     try!(fs::symlink(version_lib, lib))
     try!(fs::symlink(version_share, share));
 
-    self.refresh();
+    try!(self.refresh());
 
     Ok(())
   }

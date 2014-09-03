@@ -37,7 +37,7 @@ fn get_command(args: &Args) -> Command {
     Refresh
   } else if args.cmd_versions {
     Versions
-  } else {
+  } else  {
     fail!("unsupported command")
   }
 }
