@@ -91,7 +91,10 @@ impl Rustv {
   pub fn new(prefix: &Path) -> Rustv {
     let directory_exists = prefix.join(".rustv").exists();
 
+    println!("Above here! with path as {}", prefix.join(".rustv").display());
+
     if !directory_exists {
+      println!("Doing Rustv init")
       create_rustv_directory(prefix).unwrap()
     }
 
@@ -99,7 +102,9 @@ impl Rustv {
 
     let root = prefix.join(RUSTV_DIR_NAME);
     let current_version = root.join("versions").join(version.as_slice());
+    println!("Loading versions ...");
     let versions = load_versions(&root);
+    println!("Loaded versions.")
 
     Rustv {
       root: root,
@@ -109,11 +114,17 @@ impl Rustv {
   }
 
   pub fn setup() -> Rustv {
+    println!("Invoking setup ...");
     Rustv::new(&locate_installation_directory())
   }
 
   fn read_current_version(root: &Path) -> String {
-    File::open(&root.join("current_version")).read_to_string().unwrap().chomp()
+    let current_version = &root.join("current_version");
+    if current_version.exists() {
+      File::open(&root.join("current_version")).read_to_string().unwrap().chomp()
+    } else {
+      "system".to_string()
+    }
   }
 
   /// Place symbolic link to the requested version in the installation
@@ -121,6 +132,10 @@ impl Rustv {
 
   fn detect_system_rust() {
     fail!("Not yet implemented: detect_system_rust")
+  }
+
+  pub fn download_path(&self) -> Path {
+    self.root.join(DOWNLOAD_CACHE_DIR)
   }
 
   pub fn versions(&self) -> IoResult<()> {

@@ -1,3 +1,13 @@
 [[version]]
 name = "0.11.0"
-url = "http://static.rust-lang.org/dist/rust-0.11.0.tar.gz"
+binary_url = "http://static.rust-lang.org/dist/rust-0.11.0-x86_64-apple-darwin.tar.gz"
+source_url = "http://static.rust-lang.org/dist/rust-0.11.0.tar.gz"
+cargo = false
+from_source = false
+
+[[version]]
+name = "nightly"
+binary_url = "http://static.rust-lang.org/dist/rust-nightly-x86_64-apple-darwin.tar.gz"
+source_url = "http://static.rust-lang.org/dist/rust-nightly.tar.gz"
+cargo = true
+from_source = false

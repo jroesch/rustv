@@ -40,12 +40,9 @@ fn main() {
   print_install_message(&prefix, &version_name).unwrap();
   let prefix_path = &Path::new(prefix);
   let rustv = Rustv::setup();
-  let version_to_install = rustv.version(&version_name);
-  println!("About to download!");
-  let dl_path = rustv.root.join(DOWNLOAD_CACHE_DIR);
-  let source = version_to_install.download_to(&dl_path).unwrap();
-  build_rust_in(&source, prefix_path, version_name.clone());
-  //build_cargo_in(&Path::new("/Users/jroesch/Git/cargo"), prefix_path, version_name);
+  let version = rustv.version(&version_name);
+  println!("About to Install!");
+  version.install(&rustv.download_path(), prefix_path);
 }
 
 fn print_install_message(prefix: &String, version_name: &String) -> IoResult<()> {
@@ -56,20 +53,3 @@ fn print_install_message(prefix: &String, version_name: &String) -> IoResult<()>
   try!(term.write_str(format!("{} to {}\n", version_name, prefix).as_slice()));
   Ok(())
 }
-
-fn build_rust_in(build_path: &Path, prefix: &Path, version_name: String) {
-  /* fetch a version of rust to build */
-  os::change_dir(build_path);
-  let mut configure = process::Command::new(build_path.join("configure"));
-  configure.arg(Path::new(format!("--prefix={}", prefix.join(version_name).display())));
-  Shell::new(configure).block().unwrap();
-
-  let make = process::Command::new("make");
-  Shell::new(make).block().unwrap();
-
-  let mut make_install = process::Command::new("make");
-  make_install.arg("install");
-  Shell::new(make_install).block().unwrap();
-}
-
-//fn build_cargo_in(build_path: &Path, prefix: &Path, version_name: String) {}

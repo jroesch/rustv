@@ -46,8 +46,9 @@ fn main() {
   let mut conf = docopt::DEFAULT_CONFIG.clone();
   conf.version = Some("rustv pre-0.0.1".to_string());
   let arguments: Args = FlagParser::parse_conf(conf).unwrap_or_else(|e| e.exit());
+  println!("Loading Rustv ...")
   let mut rustv = Rustv::setup();
-  //let versions = installation.load_versions();
+  println!("Loaded Rustv.")
   println!("{}", get_command(&arguments));
   match get_command(&arguments) {
     Install => {
@@ -68,6 +69,7 @@ fn main() {
       rustv.refresh().unwrap();
     },
     Versions => {
+      println!("Running command: versions")
       rustv.versions().unwrap();
     }
   };

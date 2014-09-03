@@ -2,54 +2,59 @@
 name = "rustv"
 version = "0.0.1-pre"
 dependencies = [
- "docopt 0.6.0 (git+https://github.com/burntsushi/docopt.rs#fc7ba2f1a5a351f7874257d880223d2ff5c75d36)",
- "docopt_macros 0.6.0 (git+https://github.com/burntsushi/docopt.rs#fc7ba2f1a5a351f7874257d880223d2ff5c75d36)",
- "http 0.1.0-pre (git+https://github.com/chris-morgan/rust-http#b7f2fe742c01cb19a7d2873d9b96e005fcdc648c)",
- "toml 0.1.0 (git+https://github.com/alexcrichton/toml-rs#8c128cb550ba66d4962cd81acca93857c605eaa0)",
+ "docopt 0.6.2 (git+https://github.com/burntsushi/docopt.rs#52fd504ac4d9e9599adf0da51357dce00221d1de)",
+ "docopt_macros 0.6.2 (git+https://github.com/burntsushi/docopt.rs#52fd504ac4d9e9599adf0da51357dce00221d1de)",
+ "http 0.1.0-pre (git+https://github.com/chris-morgan/rust-http#42c1b07f551bd33303f5c5d1997c0af22c21720a)",
+ "toml 0.1.0 (git+https://github.com/alexcrichton/toml-rs#e3ce3517348dd5f6f6306dc1f3bae7f9dd77c0fe)",
 ]
 
 [[package]]
 name = "docopt"
-version = "0.6.0"
-source = "git+https://github.com/burntsushi/docopt.rs#fc7ba2f1a5a351f7874257d880223d2ff5c75d36"
+version = "0.6.2"
+source = "git+https://github.com/burntsushi/docopt.rs#52fd504ac4d9e9599adf0da51357dce00221d1de"
+
+[[package]]
+name = "docopt"
+version = "0.6.2"
+source = "git+https://github.com/docopt/docopt.rs#52fd504ac4d9e9599adf0da51357dce00221d1de"
 
 [[package]]
 name = "docopt_macros"
-version = "0.6.0"
-source = "git+https://github.com/burntsushi/docopt.rs#fc7ba2f1a5a351f7874257d880223d2ff5c75d36"
+version = "0.6.2"
+source = "git+https://github.com/burntsushi/docopt.rs#52fd504ac4d9e9599adf0da51357dce00221d1de"
 dependencies = [
- "docopt 0.6.0 (git+https://github.com/burntsushi/docopt.rs#fc7ba2f1a5a351f7874257d880223d2ff5c75d36)",
+ "docopt 0.6.2 (git+https://github.com/docopt/docopt.rs#52fd504ac4d9e9599adf0da51357dce00221d1de)",
 ]
 
 [[package]]
 name = "encoding"
 version = "0.1.0"
-source = "git+https://github.com/lifthrasiir/rust-encoding#7e7950ddbd46428a439db3e2594fa78f0972ef2e"
+source = "git+https://github.com/lifthrasiir/rust-encoding#a44501c7d87dec0a8071053a57c1213b33195ee9"
 
 [[package]]
 name = "http"
 version = "0.1.0-pre"
-source = "git+https://github.com/chris-morgan/rust-http#b7f2fe742c01cb19a7d2873d9b96e005fcdc648c"
+source = "git+https://github.com/chris-morgan/rust-http#42c1b07f551bd33303f5c5d1997c0af22c21720a"
 dependencies = [
- "openssl 0.0.0 (git+https://github.com/sfackler/rust-openssl.git#07f12370d3644673e8811f93485cddccead22590)",
- "url 0.1.0 (git+https://github.com/servo/rust-url#cb5b5f19ffae4aa040f9b4a57bd3f707aa6ffb54)",
+ "openssl 0.0.0 (git+https://github.com/sfackler/rust-openssl.git#cd40d25cb5721064c5c2002c41a616d2dba7399a)",
+ "url 0.1.0 (git+https://github.com/servo/rust-url#d894135cac4e0085f41ba3a816240b792f9e6154)",
 ]
 
 [[package]]
 name = "openssl"
 version = "0.0.0"
-source = "git+https://github.com/sfackler/rust-openssl.git#07f12370d3644673e8811f93485cddccead22590"
+source = "git+https://github.com/sfackler/rust-openssl.git#cd40d25cb5721064c5c2002c41a616d2dba7399a"
 
 [[package]]
 name = "toml"
 version = "0.1.0"
-source = "git+https://github.com/alexcrichton/toml-rs#8c128cb550ba66d4962cd81acca93857c605eaa0"
+source = "git+https://github.com/alexcrichton/toml-rs#e3ce3517348dd5f6f6306dc1f3bae7f9dd77c0fe"
 
 [[package]]
 name = "url"
 version = "0.1.0"
-source = "git+https://github.com/servo/rust-url#cb5b5f19ffae4aa040f9b4a57bd3f707aa6ffb54"
+source = "git+https://github.com/servo/rust-url#d894135cac4e0085f41ba3a816240b792f9e6154"
 dependencies = [
- "encoding 0.1.0 (git+https://github.com/lifthrasiir/rust-encoding#7e7950ddbd46428a439db3e2594fa78f0972ef2e)",
+ "encoding 0.1.0 (git+https://github.com/lifthrasiir/rust-encoding#a44501c7d87dec0a8071053a57c1213b33195ee9)",
 ]
 
