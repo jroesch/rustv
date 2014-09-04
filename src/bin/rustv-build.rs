@@ -8,14 +8,9 @@ extern crate term;
 extern crate docopt;
 
 use std::io::{IoResult};
-use std::os;
-use std::io;
-use std::io::fs;
-use std::io::process;
 use docopt::FlagParser;
 use term::{Terminal, stdout, color};
-use rustv::shell::{Shell};
-use rustv::{Rustv, DOWNLOAD_CACHE_DIR};
+use rustv::Rustv;
 
 docopt!(Args, "
 rustv-build
@@ -42,7 +37,9 @@ fn main() {
   let rustv = Rustv::setup();
   let version = rustv.version(&version_name);
   println!("About to Install!");
-  version.install(&rustv.download_path(), prefix_path);
+  version.install(&rustv.download_path(), prefix_path).unwrap_or_else(|err| {
+    fail!("rustv-build failed: {}", err);
+  });
 }
 
 fn print_install_message(prefix: &String, version_name: &String) -> IoResult<()> {
