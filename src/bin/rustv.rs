@@ -2,6 +2,7 @@
 extern crate rustv;
 extern crate serialize;
 extern crate term;
+#[phase(plugin, link)] extern crate log;
 #[phase(plugin)] extern crate docopt_macros;
 extern crate docopt;
 extern crate toml;
@@ -43,12 +44,11 @@ fn get_command(args: &Args) -> Command {
 }
 
 fn main() {
+  debug!("Starting ...");
   let mut conf = docopt::DEFAULT_CONFIG.clone();
   conf.version = Some("rustv pre-0.0.1".to_string());
   let arguments: Args = FlagParser::parse_conf(conf).unwrap_or_else(|e| e.exit());
-  println!("Loading Rustv ...")
   let mut rustv = Rustv::setup();
-  println!("Loaded Rustv.")
   println!("{}", get_command(&arguments));
   match get_command(&arguments) {
     Install => {
@@ -63,7 +63,9 @@ fn main() {
     Which => rustv.which(arguments.arg_command.as_slice()),
     Global => {
       let version = &arguments.arg_version;
-      rustv.change_version(version.as_slice());
+      rustv.change_version(version.as_slice()).unwrap_or_else(|err| {
+        println!("rustv failed: when changing to version {} {}", version, err);
+      });
     },
     Refresh => {
       rustv.refresh().unwrap();

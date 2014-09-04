@@ -90,18 +90,18 @@ impl Rustv {
   pub fn new(root: &Path) -> Rustv {
     let directory_exists = root.exists();
 
-    println!("Above here! with path as {}", root.display());
+    debug!("Initializing `rustv` with {} as root path", root.display());
 
     if !directory_exists {
-      println!("Doing Rustv init")
+      debug!("No installation found. Installing ...")
       create_rustv_directory(root).unwrap()
     }
 
     let version = Rustv::read_current_version(root);
     let current_version = root.join("versions").join(version.as_slice());
-    println!("Loading versions ...");
+    debug!("Loading versions ...");
     let versions = load_versions(root);
-    println!("Loaded versions.")
+    debug!("Loaded versions.")
 
     Rustv {
       root: root.clone(),
@@ -111,7 +111,7 @@ impl Rustv {
   }
 
   pub fn setup() -> Rustv {
-    println!("Invoking setup ...");
+    debug!("Invoking setup ...");
     Rustv::new(&locate_installation_directory())
   }
 
@@ -144,7 +144,7 @@ impl Rustv {
     Ok(())
   }
 
-  pub fn refresh(&self) -> IoResult<()> {
+  pub fn refresh_binaries(&self) -> IoResult<()> {
     let bin_dir = &self.current_version.join("bin");
     for exec in try!(fs::readdir(bin_dir)).iter() {
       println!("Generating binary shim for: {}", exec.display());
@@ -152,6 +152,35 @@ impl Rustv {
     }
 
     Ok(())
+  }
+
+  pub fn change_version(&mut self, version: &str) -> IoResult<()> {
+    self.current_version = self.install_path_for(version);
+    self.write_version_file(version);
+    // Both `lib` and `share` are easy just symlink to them.
+
+    // Clean up
+    let lib = &self.root.join("lib");
+    let share = &self.root.join("share");
+
+    try!(fs::unlink(lib));
+    try!(fs::unlink(share))
+
+    // Re-symlink
+    let version_lib = &self.current_version.join("lib");
+    let version_share = &self.current_version.join("share");
+
+    try!(fs::symlink(version_lib, lib))
+    try!(fs::symlink(version_share, share));
+
+    try!(self.refresh_binaries());
+
+    Ok(())
+  }
+
+  pub fn refresh(&mut self) -> IoResult<()> {
+    let version = self.current_version.clone();
+    self.change_version(format!("{}", version.display()).as_slice())
   }
 
   fn create_binary_shim(&self, exec_path: &Path) -> IoResult<()> {
@@ -177,30 +206,6 @@ impl Rustv {
   fn write_version_file(&self, version: &str) -> IoResult<()> {
     File::open_mode(&self.root.join("current_version"), io::Truncate, io::Write).write(version.as_bytes());
     fs::chmod(&self.root.join("current_version"), io::UserRWX)
-  }
-
-  pub fn change_version(&mut self, version: &str) -> IoResult<()> {
-    self.current_version = self.install_path_for(version);
-    self.write_version_file(version);
-    // Both `lib` and `share` are easy just symlink to them.
-
-    // Clean up
-    let lib = &self.root.join("lib");
-    let share = &self.root.join("share");
-
-    try!(fs::unlink(lib));
-    try!(fs::unlink(share))
-
-    // Re-symlink
-    let version_lib = &self.current_version.join("lib");
-    let version_share = &self.current_version.join("share");
-
-    try!(fs::symlink(version_lib, lib))
-    try!(fs::symlink(version_share, share));
-
-    try!(self.refresh());
-
-    Ok(())
   }
 
   pub fn install(&self, version: &str, prefix: &str) {
