@@ -124,12 +124,12 @@ impl Rustv {
     }
   }
 
-  /// Place symbolic link to the requested version in the installation
-  /// directory.
-
-  fn detect_system_rust() {
-    fail!("Not yet implemented: detect_system_rust")
-  }
+  // /// Place symbolic link to the requested version in the installation
+  // /// directory.
+  //
+  // fn detect_system_rust() {
+  //   fail!("Not yet implemented: detect_system_rust")
+  // }
 
   pub fn download_path(&self) -> Path {
     self.root.join(DOWNLOAD_CACHE_DIR)
@@ -156,15 +156,15 @@ impl Rustv {
 
   pub fn change_version(&mut self, version: &str) -> IoResult<()> {
     self.current_version = self.install_path_for(version);
-    self.write_version_file(version);
+    try!(self.write_version_file(version));
     // Both `lib` and `share` are easy just symlink to them.
 
     // Clean up
     let lib = &self.root.join("lib");
     let share = &self.root.join("share");
 
-    try!(fs::unlink(lib));
-    try!(fs::unlink(share))
+    if lib.exists() { try!(fs::unlink(lib)); };
+    if share.exists() { try!(fs::unlink(share)) };
 
     // Re-symlink
     let version_lib = &self.current_version.join("lib");
@@ -180,7 +180,7 @@ impl Rustv {
 
   pub fn refresh(&mut self) -> IoResult<()> {
     let version = self.current_version.clone();
-    self.change_version(format!("{}", version.display()).as_slice())
+    self.change_version(format!("{}", version.filename_str().unwrap()).as_slice())
   }
 
   fn create_binary_shim(&self, exec_path: &Path) -> IoResult<()> {
@@ -204,8 +204,9 @@ impl Rustv {
   }
 
   fn write_version_file(&self, version: &str) -> IoResult<()> {
-    File::open_mode(&self.root.join("current_version"), io::Truncate, io::Write).write(version.as_bytes());
-    fs::chmod(&self.root.join("current_version"), io::UserRWX)
+    try!(File::open_mode(&self.root.join("current_version"), io::Truncate, io::Write).write(version.as_bytes()));
+    try!(fs::chmod(&self.root.join("current_version"), io::UserRWX));
+    Ok(())
   }
 
   pub fn install(&self, version: &str, prefix: &str) {
@@ -217,10 +218,6 @@ impl Rustv {
 
   pub fn version<'a>(&'a self, version_name: &String) -> &'a Version {
     self.versions.find(version_name).unwrap()
-  }
-
-  fn cache_path(&self) -> Path {
-    self.root.join("cache")
   }
 
   pub fn which(&self, command: &str) {

@@ -1,12 +1,9 @@
 use http::client::RequestWriter;
 use http::method::Get;
-use http::headers::HeaderEnum;
 use std::os;
 use std::io;
-use std::str;
-use std::io::println;
 use url::Url;
-use std::io::{File, fs, IoResult, IoError, IoErrorKind, PathDoesntExist};
+use std::io::{File, fs, IoResult};
 use shell::Shell;
 use std::io::process::Command;
 
@@ -65,7 +62,7 @@ impl Version {
 
     println!("Untaring...")
     if !source_path.exists() {
-      fs::mkdir(&source_path, io::UserRWX);
+      try!(fs::mkdir(&source_path, io::UserRWX));
       let mut tar = Command::new("tar");
       tar.arg("-xzvf").
           arg(format!("{}", dl_path.display())).

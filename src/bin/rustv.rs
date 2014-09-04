@@ -49,7 +49,8 @@ fn main() {
   conf.version = Some("rustv pre-0.0.1".to_string());
   let arguments: Args = FlagParser::parse_conf(conf).unwrap_or_else(|e| e.exit());
   let mut rustv = Rustv::setup();
-  println!("{}", get_command(&arguments));
+  let command = get_command(&arguments);
+  debug!("Executing subcommand: {}", command);
   match get_command(&arguments) {
     Install => {
       let version = &arguments.arg_version;
@@ -71,7 +72,6 @@ fn main() {
       rustv.refresh().unwrap();
     },
     Versions => {
-      println!("Running command: versions")
       rustv.versions().unwrap();
     }
   };
