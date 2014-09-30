@@ -32,14 +32,14 @@ name = "http"
 version = "0.1.0-pre"
 source = "git+https://github.com/chris-morgan/rust-http#fbec7cb3ea00e2685fd1dcf4ce1f7488c7c58704"
 dependencies = [
- "openssl 0.0.0 (git+https://github.com/sfackler/rust-openssl.git#359043a7aaac6b10d6eb8692e613aa70f52cfc1b)",
+ "openssl 0.0.0 (git+https://github.com/sfackler/rust-openssl.git#73885dad0263e6203cf33211857e3c25ff52aa99)",
  "url 0.1.0 (git+https://github.com/servo/rust-url#29f70a47230c2aa736e263977247c786e0b2c243)",
 ]
 
 [[package]]
 name = "openssl"
 version = "0.0.0"
-source = "git+https://github.com/sfackler/rust-openssl.git#359043a7aaac6b10d6eb8692e613aa70f52cfc1b"
+source = "git+https://github.com/sfackler/rust-openssl.git#73885dad0263e6203cf33211857e3c25ff52aa99"
 
 [[package]]
 name = "toml"

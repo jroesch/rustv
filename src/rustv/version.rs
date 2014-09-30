@@ -8,6 +8,7 @@ use std::io::{File, fs, IoResult};
 use std::io::fs::PathExtensions;
 use shell::Shell;
 use std::io::process::Command;
+use time;
 
 #[deriving(Show)]
 pub enum BuildType {
@@ -46,7 +47,8 @@ impl Version {
   // Old dl_cache sucks, gonna remove caching for now, and come back in another
   // pass.
   fn download(&self, build_type: BuildType) -> IoResult<Path> {
-    let path = tmpdir();
+    let path = tmpdir().join(time::now_utc().tm_nsec.to_string().as_slice());
+    try!(fs::mkdir(&path, io::UserRWX));
     let dl_path = path.join(self.name.as_slice());
     let source_path = path.join(format!("source-{}", self.name).as_slice());
 
@@ -64,16 +66,14 @@ impl Version {
 
     verbose!("Unpacking source to {} ...", source_path.display());
 
-    if !source_path.exists() {
-      try!(fs::mkdir(&source_path, io::UserRWX));
-      let mut tar = Command::new("tar");
-      tar.arg("-xzvf").
-          arg(format!("{}", dl_path.display())).
-          arg("-C").
-          arg(format!("{}", source_path.display())).
-          arg("--strip-components=1");
-      try!(tar.spawn());
-    }
+    try!(fs::mkdir(&source_path, io::UserRWX));
+    let mut tar = Command::new("tar");
+    tar.arg("-xzvf").
+        arg(format!("{}", dl_path.display())).
+        arg("-C").
+        arg(format!("{}", source_path.display())).
+        arg("--strip-components=1");
+    try!(tar.spawn());
 
     Ok(path.join(source_path))
   }

@@ -9,6 +9,7 @@ extern crate serialize;
 extern crate http;
 extern crate url;
 extern crate toolbelt;
+extern crate time;
 
 use std::io;
 use std::io::{File, fs, IoResult};
