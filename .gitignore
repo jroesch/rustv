@@ -1,11 +1,2 @@
-*.o
-*.so
-*.rlib
-*.dll
-*.exe
-/target/
-..gitignore.un~
-..travis.yml.un~
-.*.swp
-.*.un~
-*.DS_Store
+/target
+/Cargo.lock
