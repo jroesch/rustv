@@ -9,3 +9,21 @@ This should make the lives of compiler developers, and library authors easier.
 Especially when it comes to supporting multiple versions of your tool it will be
 as simple as `rustv local 0.11.0`, `cargo test`, `rustv local 0.12.0`,
 `cargo test`.
+
+# Installation
+To install simply clone the repository: 
+```
+git clone https://github.com/jroesch/rustv
+```
+
+Build the project with Cargo:
+```
+cargo build
+```
+
+Then run the install script:
+```
+./install.sh
+```
+
+Eventually we will support binary installation that doesn't require a Rust compiler to build.
