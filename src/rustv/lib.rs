@@ -1,6 +1,7 @@
 #![crate_name="rustv"]
-#![crate_type="rlib"]
-#![feature(globs, phase)]
+#![crate_type="lib"]
+#![experimental]
+#![feature(globs, phase, macro_rules)]
 
 #[phase(plugin, link)] extern crate log;
 extern crate toml;
@@ -18,11 +19,24 @@ use std::collections::HashMap;
 use toolbelt::StringUtil;
 use version::{BuildType, Source, Binary, Version};
 
+// This is kind of hacky not sure what way is better to globally turn on
+// verbosity for the entire program currently.
+static mut VERBOSE_MODE: bool = false;
+
 static RUSTV_ENV_NAME: &'static str = "RUSTV_PATH";
 pub static RUSTV_DIR_NAME: &'static str = ".rustv";
 static HOME_NOT_FOUND: &'static str =
   "Could not locate active rustv installation or HOME environment variable.";
 pub static DOWNLOAD_CACHE_DIR: &'static str = "dl_cache";
+
+macro_rules! verbose(($fmt:expr, $($args:tt)*) => ({
+    if unsafe { ::VERBOSE_MODE } {
+        println!($fmt, $($args)*)
+        debug!($fmt, $($args)*)
+    } else {
+        debug!($fmt, $($args)*)
+    }
+}))
 
 pub mod shell;
 pub mod version;

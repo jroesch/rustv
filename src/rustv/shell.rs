@@ -14,7 +14,7 @@ impl Shell {
   pub fn block(self) -> IoResult<()> {
     let child = match self.command.spawn() {
       Ok(child) => child,
-      Err(e) => fail!("failed to execute make: {}", e)
+      Err(e) => fail!("failed to execute {}: {}", self.command, e)
     };
 
     /* Why do I need to clone here? */

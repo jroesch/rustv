@@ -1,6 +1,7 @@
 use http::client::RequestWriter;
 use http::method::Get;
 use std::os;
+use std::os::tmpdir;
 use std::io;
 use url::Url;
 use std::io::{File, fs, IoResult};
@@ -37,35 +38,32 @@ impl Version {
   }
 
   pub fn install(&self, download_path: &Path, prefix: &Path, build_type: BuildType) -> IoResult<()> {
-    let src = &try!(self.download_to(download_path, build_type));
-    try!(self.build_rust_in(src, prefix, &self.name, build_type));
+    let src = try!(self.download(build_type));
+    try!(self.build_rust_in(&src, prefix, &self.name, build_type));
     Ok(())
   }
 
-  fn download_to(&self, path: &Path, build_type: BuildType) -> IoResult<Path> {
-    // Clean up the naming and inference of packaging type here
+  // Old dl_cache sucks, gonna remove caching for now, and come back in another
+  // pass.
+  fn download(&self, build_type: BuildType) -> IoResult<Path> {
+    let path = tmpdir();
     let dl_path = path.join(self.name.as_slice());
     let source_path = path.join(format!("source-{}", self.name).as_slice());
-    let downloaded = dl_path.exists();
-    println!("{} {}", format!("{}", dl_path.display()), format!("{}", source_path.display()));
-    debug!("Downloading... ")
-    if !downloaded {
-      //println!("url");
-      let url = self.url(build_type);
-      // println!("request");
-      let request: RequestWriter = try!(RequestWriter::new(Get, url));
-      //println!("response");
-      let mut response = match request.read_response() {
-        Ok(resp) => resp,
-        _ => fail!("bleh")
-      };
-      // println!("body");
-      let body = try!(response.read_to_end());
-      // println!("writing to file");
-      try!(File::create(&dl_path).write(body.as_slice()))
-    }
 
-    debug!("Untaring build directory ...")
+    verbose!("Downloading to {} ... ", dl_path.display())
+
+    let url = self.url(build_type);
+    let request: RequestWriter = try!(RequestWriter::new_request(Get, url, true, false));
+    let mut response = match request.read_response() {
+        Ok(resp) => resp,
+        Err((resp, err)) => { println!("{}", err); fail!("done.") }
+    };
+
+    let body = try!(response.read_to_end());
+    try!(File::create(&dl_path).write(body.as_slice()))
+
+    verbose!("Unpacking source to {} ...", source_path.display());
+
     if !source_path.exists() {
       try!(fs::mkdir(&source_path, io::UserRWX));
       let mut tar = Command::new("tar");
