@@ -13,7 +13,7 @@ use rustv::version::{Source, Binary};
 
 docopt!(Args, "
 Rust's version manager
-Usage: rustv install [--source] <version>
+Usage: rustv install [--source | -v] <version>
        rustv which   <command>
        rustv global  <version>
        rustv refresh
@@ -50,6 +50,9 @@ fn main() {
   conf.version = Some("rustv pre-0.0.1".to_string());
   let arguments: Args = FlagParser::parse_conf(conf).unwrap_or_else(|e| e.exit());
   let mut rustv = Rustv::setup();
+  if arguments.flag_v {
+      unsafe { rustv::VERBOSE_MODE = true }
+  };
   let command = get_command(&arguments);
   debug!("Executing subcommand: {}", command);
   match get_command(&arguments) {
@@ -57,8 +60,8 @@ fn main() {
       let version = &arguments.arg_version;
       let prefix_path = rustv.install_path_for(version.as_slice());
       let source = if arguments.flag_source { Source } else { Binary };
-      println!("{}", source);
-      println!("{} {}", arguments.arg_version.as_slice(), format!("{}", prefix_path.display()));
+    //   println!("{}", source);
+    //   println!("{} {}", arguments.arg_version.as_slice(), format!("{}", prefix_path.display()));
       rustv.install(
         arguments.arg_version.as_slice(),
         format!("{}", prefix_path.display()).as_slice(),

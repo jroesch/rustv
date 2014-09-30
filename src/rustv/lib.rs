@@ -16,13 +16,14 @@ use std::io::{File, fs, IoResult};
 use std::io::fs::PathExtensions;
 use std::os::{getenv};
 use std::io::process;
+use std::io::process::Command;
 use std::collections::HashMap;
 use toolbelt::StringUtil;
 use version::{BuildType, Source, Binary, Version};
 
 // This is kind of hacky not sure what way is better to globally turn on
 // verbosity for the entire program currently.
-static mut VERBOSE_MODE: bool = false;
+pub static mut VERBOSE_MODE: bool = false;
 
 static RUSTV_ENV_NAME: &'static str = "RUSTV_PATH";
 pub static RUSTV_DIR_NAME: &'static str = ".rustv";
@@ -30,12 +31,11 @@ static HOME_NOT_FOUND: &'static str =
   "Could not locate active rustv installation or HOME environment variable.";
 pub static DOWNLOAD_CACHE_DIR: &'static str = "dl_cache";
 
-macro_rules! verbose(($fmt:expr, $($args:tt)*) => ({
+macro_rules! verbose(($($args:tt)*) => ({
     if unsafe { ::VERBOSE_MODE } {
-        println!($fmt, $($args)*)
-        debug!($fmt, $($args)*)
+        println!($($args)*)
     } else {
-        debug!($fmt, $($args)*)
+        debug!($($args)*)
     }
 }))
 
@@ -71,12 +71,20 @@ fn load_versions(root: &Path) -> HashMap<String, Version> {
   hash_map
 }
 
+fn fetch_versions_manifest(root: &Path) -> IoResult<()> {
+    let mut command = Command::new("curl");
+    let out = try!(command.arg("https://raw.githubusercontent.com/jroesch/rustv/master/versions.toml").output());
+    try!(File::create(&root.join("versions.toml")).write(out.output.as_slice()));
+    Ok(())
+}
+
 fn create_rustv_directory(root: &Path) -> IoResult<()>{
   debug!("Initializing {}", root.display());
   try!(fs::mkdir(root, io::UserRWX))
   try!(fs::mkdir(&root.join("bin"), io::UserRWX))
   try!(fs::mkdir(&root.join("versions"), io::UserRWX));
   fs::mkdir(&root.join("dl_cache"), io::UserRWX).unwrap();
+  fetch_versions_manifest(root);
   Ok(())
 }
 
@@ -93,18 +101,18 @@ impl Rustv {
   pub fn new(root: &Path) -> Rustv {
     let directory_exists = root.exists();
 
-    debug!("Initializing `rustv` with {} as root path", root.display());
+    verbose!("Initializing `rustv` with {} as root path", root.display());
 
     if !directory_exists {
-      debug!("No installation found. Installing ...")
+      verbose!("No installation found. Installing ...");
       create_rustv_directory(root).unwrap()
     }
 
     let version = Rustv::read_current_version(root);
     let current_version = root.join("versions").join(version.as_slice());
-    debug!("Loading versions ...");
+    verbose!("Loading versions ...");
     let versions = load_versions(root);
-    debug!("Loaded versions.")
+    verbose!("Loaded versions.");
 
     Rustv {
       root: root.clone(),
@@ -114,7 +122,7 @@ impl Rustv {
   }
 
   pub fn setup() -> Rustv {
-    debug!("Invoking setup ...");
+    verbose!("Invoking setup ...");
     Rustv::new(&locate_installation_directory())
   }
 
@@ -192,13 +200,13 @@ impl Rustv {
     let bin = format!("$RUSTV_PATH/versions/`cat $RUSTV_PATH/current_version`/bin/{} $@", exec_path.filename_str().unwrap());
     let contents = format!("#!/bin/sh\n{}\n{}\n{}", rustv_path, env_setup, bin);
 
-    debug!("Writing contents to: {}\n{}", exec_path.display(), contents);
+    verbose!("Writing contents to: {}\n{}", exec_path.display(), contents);
 
     match exec_path.filename_str() {
       None => fail!("I don't know why this would ever fail - Jared"),
       Some(file_name) => {
         let file_path = &self.root.join("bin").join(file_name);
-        println!("Putting shim here: {}", file_path.display()); //.write(contents.as_bytes()));
+        verbose!("Creating shim here: {}", file_path.display()); //.write(contents.as_bytes()));
         try!(File::create(file_path).write(contents.as_bytes()));
         try!(fs::chmod(file_path, io::UserExec))
       }
@@ -214,7 +222,7 @@ impl Rustv {
 
   pub fn install(&self, version: &str, prefix: &str, build_type: BuildType) {
     let mut command = process::Command::new("rustv-build");
-    debug!("executing: rustv-build {} {} {}", build_type, version, prefix);
+    verbose!("executing: rustv-build {} {} {}", build_type, version, prefix);
     match build_type {
       Source => command.arg("--source").arg(version).arg(prefix),
       Binary => command.arg(version).arg(prefix)

@@ -40,7 +40,6 @@ fn main() {
   let version = rustv.version(&version_name);
   debug!("About to Install! source: {}", arguments.flag_source);
   let source = if arguments.flag_source { Source } else { Binary };
-  println!("{}", source);
   version.install(&rustv.download_path(), prefix_path, source).unwrap_or_else(|err| {
     fail!("rustv-build failed: {}", err);
   });

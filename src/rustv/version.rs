@@ -82,32 +82,30 @@ impl Version {
     /* fetch a version of rust to build */
     os::change_dir(build_path);
 
-    println!("{}", build_type);
-
     match build_type {
       Source => {
-        debug!("Invoking source build process ...");
-        debug!("Invoking configure ...")
+        verbose!("Invoking source build process ...");
+        verbose!("Invoking configure ...")
         let mut configure = Command::new(build_path.join("configure"));
         configure.arg(Path::new(format!("--prefix={}", prefix.join(version_name.as_slice()).display())));
         Shell::new(configure).block().unwrap();
 
-        debug!("Invoking make ...");
+        verbose!("Invoking make ...");
         let make = Command::new("make");
         Shell::new(make).block().unwrap();
 
-        debug!("Invoking make install ...");
+        verbose!("Invoking make install ...");
         let mut make_install = Command::new("make");
         make_install.arg("install");
         try!(Shell::new(make_install).block())
-        println!("Finished source installation.")
+        verbose!("Finished source installation.")
       },
       Binary => {
         println!("Invoking binary build process...");
         let mut install = Command::new(build_path.join("install.sh"));
         install.arg(Path::new(format!("--prefix={}", prefix.display())));
         try!(Shell::new(install).block());
-        println!("Finshed binary installation.")
+        verbose!("Finshed binary installation.")
       }
     }
 
