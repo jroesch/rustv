@@ -27,3 +27,7 @@ Then run the install script:
 ```
 
 Eventually we will support binary installation that doesn't require a Rust compiler to build.
+
+# Notes
+Currently there is no window support. If anyone is interested in helping out with this I know
+absoutely nothing about building and installing software on Windows.
