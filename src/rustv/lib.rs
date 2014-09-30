@@ -1,19 +1,22 @@
 #![crate_name="rustv"]
 #![crate_type="rlib"]
-#![feature(phase)]
+#![feature(globs, phase)]
 
 #[phase(plugin, link)] extern crate log;
 extern crate toml;
 extern crate serialize;
 extern crate http;
 extern crate url;
+extern crate toolbelt;
 
 use std::io;
 use std::io::{File, fs, IoResult};
+use std::io::fs::PathExtensions;
 use std::os::{getenv};
 use std::io::process;
 use std::collections::HashMap;
-use version::Version;
+use toolbelt::StringUtil;
+use version::{BuildType, Source, Binary, Version};
 
 static RUSTV_ENV_NAME: &'static str = "RUSTV_PATH";
 pub static RUSTV_DIR_NAME: &'static str = ".rustv";
@@ -40,36 +43,21 @@ pub struct Rustv {
   versions: HashMap<String, Version>
 }
 
-trait StringUtil {
-  fn chomp(&self) -> String;
-}
-
-impl StringUtil for String {
-  fn chomp(&self) -> String {
-    let mut result = self.clone();
-    for c in result.as_slice().chars().rev() {
-      if c == '\n' || c == '\r' {
-        result.pop_char();
-      }
-    }
-    result
-  }
-}
-
 fn load_versions(root: &Path) -> HashMap<String, Version> {
   let toml = File::open(&root.join("versions.toml")).read_to_string().unwrap();
   let table = toml::Parser::new(toml.as_slice()).parse().unwrap();
+  // This should be a problem? shadowing most likely
   let versions = table.find(&"version".to_string()).unwrap();
   let versions: Vec<Version> = toml::decode(versions.clone()).unwrap();
   let mut hash_map = HashMap::new();
-  for version in versions.move_iter() {
+  for version in versions.into_iter() {
     hash_map.insert(version.name.clone(), version);
   };
   hash_map
 }
 
 fn create_rustv_directory(root: &Path) -> IoResult<()>{
-  println!("Setting up .rustv");
+  debug!("Initializing {}", root.display());
   try!(fs::mkdir(root, io::UserRWX))
   try!(fs::mkdir(&root.join("bin"), io::UserRWX))
   try!(fs::mkdir(&root.join("versions"), io::UserRWX));
@@ -189,7 +177,7 @@ impl Rustv {
     let bin = format!("$RUSTV_PATH/versions/`cat $RUSTV_PATH/current_version`/bin/{} $@", exec_path.filename_str().unwrap());
     let contents = format!("#!/bin/sh\n{}\n{}\n{}", rustv_path, env_setup, bin);
 
-    println!("{}", contents);
+    debug!("Writing contents to: {}\n{}", exec_path.display(), contents);
 
     match exec_path.filename_str() {
       None => fail!("I don't know why this would ever fail - Jared"),
@@ -209,10 +197,14 @@ impl Rustv {
     Ok(())
   }
 
-  pub fn install(&self, version: &str, prefix: &str) {
+  pub fn install(&self, version: &str, prefix: &str, build_type: BuildType) {
     let mut command = process::Command::new("rustv-build");
-    println!("executing: rustv-build {} {}", version, prefix);
-    command.arg(version).arg(prefix);
+    debug!("executing: rustv-build {} {} {}", build_type, version, prefix);
+    match build_type {
+      Source => command.arg("--source").arg(version).arg(prefix),
+      Binary => command.arg(version).arg(prefix)
+    };
+
     shell::Shell::new(command).block().unwrap()
   }
 

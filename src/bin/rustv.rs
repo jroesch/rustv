@@ -8,11 +8,12 @@ extern crate docopt;
 extern crate toml;
 
 use docopt::FlagParser;
-use rustv::{Rustv};
+use rustv::Rustv;
+use rustv::version::{Source, Binary};
 
 docopt!(Args, "
 Rust's version manager
-Usage: rustv install <version>
+Usage: rustv install [--source] <version>
        rustv which   <command>
        rustv global  <version>
        rustv refresh
@@ -55,10 +56,13 @@ fn main() {
     Install => {
       let version = &arguments.arg_version;
       let prefix_path = rustv.install_path_for(version.as_slice());
+      let source = if arguments.flag_source { Source } else { Binary };
+      println!("{}", source);
       println!("{} {}", arguments.arg_version.as_slice(), format!("{}", prefix_path.display()));
       rustv.install(
         arguments.arg_version.as_slice(),
-        format!("{}", prefix_path.display()).as_slice()
+        format!("{}", prefix_path.display()).as_slice(),
+        source
       )
     },
     Which => rustv.which(arguments.arg_command.as_slice()),
